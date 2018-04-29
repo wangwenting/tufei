@@ -1,28 +1,42 @@
 #coding:utf-8
-from bs4 import BeautifulSoup
+import icbc_rate
+import zgjh_rate
+import json
 
-import util
+zgjh_url = "http://www.ccb.com/cn/personal/interestv3/rmbdeposit.html"
+icbc_url = "http://www.icbc.com.cn/ICBCDynamicSite2/other/rmbdeposit.aspx"
+path = "/Users/wangwenting/money_rate.txt"
 
-def get_rate(key, url):
-    datas={}
-    soup_rate = BeautifulSoup(util.get(url, None))
-    trs = soup_rate.findAll('tr')
-    for tr in trs:
-        if tr.get_text().find(u"活期") > 0:
-            tds = tr.findAll('td')
-            datas[key] = tds[1].get_text()
-    return datas
 
-soup = BeautifulSoup(util.get("http://www.ccb.com/cn/personal/interestv3/rmbdeposit.html",None))
+def write_file(path, datas):
+    lengh = len(datas)
+    value = []
+    for i in range(lengh):
+      val = {}
+      if i < (lengh-1):
+          val["start_time"] = datas[i][0]
+          val["end_time"] = datas[i+1][0]
+          val["value"] = datas[i][1]
+      else:
+          val["start_time"] = datas[i][0]
+          val["end_time"] = "2100-10-11"
+          val["value"] = datas[i][1]
+      value.append(val)
+    value_str = json.dumps(value)
+    with open(path, 'w') as f:
+        f.write(value_str)
 
-summary = soup.find("div", attrs={"class": "qur_r"})
-
-lis = summary.findAll('li')
-
-for li in lis:
-    key = li.get_text()
-    data = li["data"].replace("@","_")
-    url = "http://www.ccb.com/cn/personal/interestv3/%s.html" % data
-    datas = get_rate(key, url) 
-    for d, value in datas.items():
-        print d, value
+if __name__ == "__main__":
+    datas = zgjh_rate.get_datas(zgjh_url)
+    sort_datas = []
+    if datas:
+        sort_datas = [(k,datas[k]) for k in sorted(datas.keys())] 
+    else:
+        datas = icbc_rate.get_datas(icbc_url)
+        if datas:
+            sort_datas = [(k,datas[k]) for k in sorted(datas.keys())] 
+    if sort_datas:
+        write_file(path, sort_datas)
+    else:
+        #todu send 报警
+        pass

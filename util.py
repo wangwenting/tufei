@@ -25,7 +25,7 @@ def get(url, datas):
 
 def post(url, datas):
     values = urllib.urlencode(datas)
-    request = urllib2.Request(url, data)
+    request = urllib2.Request(url, values)
     return urlopen(request)
 
 if __name__ == "__main__":
